@@ -98,6 +98,12 @@ exports._unsafeEvaluateStringFunction = function(string, page) {
   };
 };
 
+exports._unsafeEvaluateWithArgs = function(string, args, page) {
+  return function() {
+    return page.evaluate(eval(string), ...args);
+  };
+};
+
 exports._unsafePageEval = function(selector, fnStr, page) {
   return function() {
     return page.$eval(selector, eval(fnStr));
@@ -143,5 +149,11 @@ exports._keyboardUp = function(string, options, page) {
 exports._setUserAgent = function(string, page) {
   return function() {
     return page.setUserAgent(string);
+  };
+};
+
+exports._setViewport = function(viewport, page) {
+  return function() {
+    return page.setViewport(viewport);
   };
 };

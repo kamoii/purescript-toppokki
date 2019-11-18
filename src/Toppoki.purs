@@ -177,6 +177,10 @@ getLocationRef p = Promise.toAffE $ FU.runFn1 _getLocationHref p
 unsafeEvaluateStringFunction :: String -> Page -> Aff Foreign
 unsafeEvaluateStringFunction = runPromiseAffE2 _unsafeEvaluateStringFunction
 
+unsafeEvaluateWithArgs :: String -> Array Foreign -> Page -> Aff Foreign
+unsafeEvaluateWithArgs = runPromiseAffE3 _unsafeEvaluateWithArgs
+
+
 -- | This method runs document.querySelector within the page and passes it as the first argument to pageFunction. If there's no element matching selector, the method throws an error.
 -- |
 -- | Second argument is a pageFunction which should be a valid JavaScript function written as a string which we unsafely eval.
@@ -256,6 +260,21 @@ keyboardUp = runPromiseAffE3 _keyboardUp
 setUserAgent :: String -> Page -> Aff Unit
 setUserAgent = runPromiseAffE2 _setUserAgent
 
+type ViewportOptions =
+  ( deviceScaleFactor :: Number
+  , isMobile :: Boolean
+  , hasTouch :: Boolean
+  , isLandscape :: Boolean
+  )
+
+setViewport
+  :: forall options trash
+   . Row.Union options trash ViewportOptions
+  => { width :: Int, height :: Int | options }
+  -> Page
+  -> Aff Unit
+setViewport = runPromiseAffE2 _setViewport
+
 foreign import puppeteer :: Puppeteer
 foreign import _launch :: forall options. FU.Fn1 options (Effect (Promise Browser))
 foreign import _newPage :: FU.Fn1 Browser (Effect (Promise Page))
@@ -273,6 +292,7 @@ foreign import _click :: FU.Fn2 Selector Page (Effect (Promise Unit))
 foreign import _waitForNavigation :: forall options. FU.Fn2 options Page (Effect (Promise Unit))
 foreign import _getLocationHref :: FU.Fn1 Page (Effect (Promise String))
 foreign import _unsafeEvaluateStringFunction :: FU.Fn2 String Page (Effect (Promise Foreign))
+foreign import _unsafeEvaluateWithArgs :: FU.Fn3 String (Array Foreign) Page (Effect (Promise Foreign))
 foreign import _unsafePageEval :: FU.Fn3 Selector String Page (Effect (Promise Foreign))
 foreign import _unsafePageEvalAll :: FU.Fn3 Selector String Page (Effect (Promise Foreign))
 foreign import _keyboardDown :: forall options. FU.Fn3 KeyboardKey options Page (Effect (Promise Unit))
@@ -281,3 +301,4 @@ foreign import _keyboardSendCharacter :: FU.Fn2 String Page (Effect (Promise Uni
 foreign import _keyboardType :: forall options. FU.Fn3 String options Page (Effect (Promise Unit))
 foreign import _keyboardUp :: forall options. FU.Fn3 KeyboardKey options Page (Effect (Promise Unit))
 foreign import _setUserAgent :: FU.Fn2 String Page (Effect (Promise Unit))
+foreign import _setViewport :: forall options. FU.Fn2 options Page (Effect (Promise Unit))
