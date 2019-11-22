@@ -1,8 +1,4 @@
-var puppeteer = require("puppeteer");
-
-exports.puppeteer = puppeteer;
-
-exports._launch = function(options) {
+exports._launch = function(options, puppeteer) {
   return function() {
     return puppeteer.launch(options);
   };

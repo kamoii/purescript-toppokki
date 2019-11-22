@@ -14,12 +14,7 @@ import Foreign (Foreign)
 import Node.Buffer (Buffer)
 import Prim.Row as Row
 import Unsafe.Coerce (unsafeCoerce)
-
-foreign import data Puppeteer :: Type
-foreign import data Browser :: Type
-foreign import data Page :: Type
-foreign import data ElementHandle :: Type
-foreign import data Request :: Type
+import Toppokki.Types
 
 newtype URL = URL String
 derive instance newtypeURL :: Newtype URL _
@@ -36,8 +31,9 @@ launch
   :: forall options trash
    . Row.Union options trash LaunchOptions
   => { | options }
+  -> Puppeteer
   -> Aff Browser
-launch = runPromiseAffE1 _launch
+launch = runPromiseAffE2 _launch
 
 newPage :: Browser -> Aff Page
 newPage = runPromiseAffE1 _newPage
@@ -283,8 +279,7 @@ setViewport = runPromiseAffE2 _setViewport
 setRequestInterception :: Boolean -> Page -> Aff Unit
 setRequestInterception = runPromiseAffE2 _setRequestInterception
 
-foreign import puppeteer :: Puppeteer
-foreign import _launch :: forall options. FU.Fn1 options (Effect (Promise Browser))
+foreign import _launch :: forall options. FU.Fn2 options Puppeteer (Effect (Promise Browser))
 foreign import _newPage :: FU.Fn1 Browser (Effect (Promise Page))
 foreign import _goto :: FU.Fn2 URL Page (Effect (Promise Unit))
 foreign import _setContent :: FU.Fn2 String Page (Effect (Promise Unit))
