@@ -19,6 +19,7 @@ foreign import data Puppeteer :: Type
 foreign import data Browser :: Type
 foreign import data Page :: Type
 foreign import data ElementHandle :: Type
+foreign import data Request :: Type
 
 newtype URL = URL String
 derive instance newtypeURL :: Newtype URL _
@@ -28,6 +29,7 @@ derive instance newtypeSelector :: Newtype Selector _
 
 type LaunchOptions =
   ( headless :: Boolean
+  , executablePath :: String
   )
 
 launch
@@ -118,6 +120,9 @@ onPageError = EU.runEffectFn3 _on "pageerror"
 
 onLoad :: EU.EffectFn1 Unit Unit -> Page -> Effect Unit
 onLoad = EU.runEffectFn3 _on "load"
+
+onRequest :: EU.EffectFn1 Request Unit -> Page -> Effect Unit
+onRequest = EU.runEffectFn3 _on "request"
 
 pageWaitForSelector
   :: forall options trash
@@ -275,6 +280,9 @@ setViewport
   -> Aff Unit
 setViewport = runPromiseAffE2 _setViewport
 
+setRequestInterception :: Boolean -> Page -> Aff Unit
+setRequestInterception = runPromiseAffE2 _setRequestInterception
+
 foreign import puppeteer :: Puppeteer
 foreign import _launch :: forall options. FU.Fn1 options (Effect (Promise Browser))
 foreign import _newPage :: FU.Fn1 Browser (Effect (Promise Page))
@@ -302,3 +310,4 @@ foreign import _keyboardType :: forall options. FU.Fn3 String options Page (Effe
 foreign import _keyboardUp :: forall options. FU.Fn3 KeyboardKey options Page (Effect (Promise Unit))
 foreign import _setUserAgent :: FU.Fn2 String Page (Effect (Promise Unit))
 foreign import _setViewport :: forall options. FU.Fn2 options Page (Effect (Promise Unit))
+foreign import _setRequestInterception :: FU.Fn2 Boolean Page (Effect (Promise Unit))

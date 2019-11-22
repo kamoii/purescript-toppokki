@@ -157,3 +157,9 @@ exports._setViewport = function(viewport, page) {
     return page.setViewport(viewport);
   };
 };
+
+exports._setRequestInterception = function(value, page) {
+  return function() {
+    return page.setRequestInterception(value);
+  };
+};
