@@ -1,11 +1,15 @@
 module Toppokki where
 
 import Prelude
+import Toppokki.Types
 
 import Control.Promise (Promise)
 import Control.Promise as Promise
 import Data.Function.Uncurried as FU
+import Data.Maybe (Maybe)
 import Data.Newtype (class Newtype)
+import Data.Nullable (Nullable)
+import Data.Nullable as Nullable
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Exception (Error)
@@ -13,8 +17,10 @@ import Effect.Uncurried as EU
 import Foreign (Foreign)
 import Node.Buffer (Buffer)
 import Prim.Row as Row
+import Prim.RowList as RowList
+import Record.Extra as RecExt
+import Toppokki.FFI (runPromiseAffE1, runPromiseAffE2, runPromiseAffE3, runPromiseAffE4)
 import Unsafe.Coerce (unsafeCoerce)
-import Toppokki.Types
 
 newtype URL = URL String
 derive instance newtypeURL :: Newtype URL _
@@ -25,15 +31,25 @@ derive instance newtypeSelector :: Newtype Selector _
 type LaunchOptions =
   ( headless :: Boolean
   , executablePath :: String
+  , defaultViewport :: Maybe Int
   )
 
+class MaybeToNullable (row :: # Type) (row' :: # Type) | row -> row' where
+  maybeToNullable :: Record row -> Record row'
+
+instance maybeToNullableI
+         :: (RowList.RowToList row xs, RecExt.MapRecord xs row (Maybe a) (Nullable a) () row')
+         => MaybeToNullable row row' where
+  maybeToNullable = RecExt.mapRecord Nullable.toNullable
+
 launch
-  :: forall options trash
+  :: forall options options' trash
    . Row.Union options trash LaunchOptions
+  => MaybeToNullable options options'
   => { | options }
   -> Puppeteer
   -> Aff Browser
-launch = runPromiseAffE2 _launch
+launch options puppeteer = runPromiseAffE2 _launch (maybeToNullable options) puppeteer
 
 newPage :: Browser -> Aff Page
 newPage = runPromiseAffE1 _newPage
@@ -117,8 +133,8 @@ onPageError = EU.runEffectFn3 _on "pageerror"
 onLoad :: EU.EffectFn1 Unit Unit -> Page -> Effect Unit
 onLoad = EU.runEffectFn3 _on "load"
 
-onRequest :: EU.EffectFn1 Request Unit -> Page -> Effect Unit
-onRequest = EU.runEffectFn3 _on "request"
+onRequest :: (Request -> Effect Unit) -> Page -> Effect Unit
+onRequest = EU.runEffectFn3 _on "request" <<< EU.mkEffectFn1
 
 pageWaitForSelector
   :: forall options trash
@@ -197,18 +213,6 @@ unsafePageEval = runPromiseAffE3 _unsafePageEval
 -- | If pageFunction returns a Promise, then page.$$eval would wait for the promise to resolve and return its value.
 unsafePageEvalAll :: Selector -> String -> Page -> Aff Foreign
 unsafePageEvalAll = runPromiseAffE3 _unsafePageEvalAll
-
-runPromiseAffE1 :: forall a o. FU.Fn1 a (Effect (Promise o)) -> a -> Aff o
-runPromiseAffE1 f a = Promise.toAffE $ FU.runFn1 f a
-
-runPromiseAffE2 :: forall a b o. FU.Fn2 a b (Effect (Promise o)) -> a -> b -> Aff o
-runPromiseAffE2 f a b = Promise.toAffE $ FU.runFn2 f a b
-
-runPromiseAffE3 :: forall a b c o. FU.Fn3 a b c (Effect (Promise o)) -> a -> b -> c -> Aff o
-runPromiseAffE3 f a b c = Promise.toAffE $ FU.runFn3 f a b c
-
-runPromiseAffE4 :: forall a b c d o. FU.Fn4 a b c d (Effect (Promise o)) -> a -> b -> c -> d -> Aff o
-runPromiseAffE4 f a b c d = Promise.toAffE $ FU.runFn4 f a b c d
 
 -- | See [USKeyboardLayout](https://github.com/GoogleChrome/puppeteer/blob/v1.18.1/lib/USKeyboardLayout.js) for a list of all key names.
 newtype KeyboardKey = KeyboardKey String
