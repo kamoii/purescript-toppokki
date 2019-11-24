@@ -30,9 +30,9 @@ tests dir = runTest do
   suite "toppokki" do
     let crashUrl = T.URL $ "file://" <> dir <> "/test/crash.html"
         testUrl = T.URL $ "file://" <> dir <> "/test/test.html"
-
+        launchOption = T.launchOption {}
     test "can screenshot and pdf output a loaded page" do
-      browser <- T.launch {} puppeteer
+      browser <- T.launch launchOption puppeteer
       page <- T.newPage browser
       T.goto crashUrl page
       content <- T.content page
@@ -42,7 +42,7 @@ tests dir = runTest do
       T.close browser
 
     test "can listen for errors and page load" do
-      browser <- T.launch {} puppeteer
+      browser <- T.launch launchOption puppeteer
       page <- T.newPage browser
       ref <- liftEffect $ Ref.new Nothing
       liftEffect $ T.onPageError (EU.mkEffectFn1 $ (Ref.write <@> ref) <<< Just) page
@@ -52,7 +52,7 @@ tests dir = runTest do
       T.close browser
 
     test "can wait for selectors" do
-      browser <- T.launch {} puppeteer
+      browser <- T.launch launchOption puppeteer
       page <- T.newPage browser
       ref <- liftEffect $ Ref.new Nothing
       liftEffect $ T.onPageError (EU.mkEffectFn1 $ (Ref.write <@> ref) <<< Just) page
@@ -61,7 +61,7 @@ tests dir = runTest do
       T.close browser
 
     test "can run functions against a single element in the page" do
-      browser <- T.launch {} puppeteer
+      browser <- T.launch launchOption puppeteer
       page <- T.newPage browser
       T.goto testUrl page
       innerTextF <- T.unsafePageEval
@@ -73,7 +73,7 @@ tests dir = runTest do
       T.close browser
 
     test "can run functions against elements in the page" do
-      browser <- T.launch {} puppeteer
+      browser <- T.launch launchOption puppeteer
       page <- T.newPage browser
       T.goto testUrl page
       innerTextsF <- T.unsafePageEvalAll
@@ -88,7 +88,7 @@ tests dir = runTest do
       let
         aKey = T.KeyboardKey "a"
         getRawKeyName (T.KeyboardKey a) = a
-      browser <- T.launch {} puppeteer
+      browser <- T.launch launchOption puppeteer
       page <- T.newPage browser
       T.goto testUrl page
       T.focus (T.Selector "input#test-press") page
@@ -103,7 +103,7 @@ tests dir = runTest do
       T.close browser
 
     test "can trigger keyboard typing" do
-      browser <- T.launch {} puppeteer
+      browser <- T.launch launchOption puppeteer
       page <- T.newPage browser
       T.goto testUrl page
       T.focus (T.Selector "input#test-type") page
@@ -118,7 +118,7 @@ tests dir = runTest do
       T.close browser
 
     test "can trigger keyboard down and up" do
-      browser <- T.launch {} puppeteer
+      browser <- T.launch launchOption puppeteer
       page <- T.newPage browser
       T.goto testUrl page
       T.focus (T.Selector "input#test-downup") page
@@ -136,7 +136,7 @@ tests dir = runTest do
       T.close browser
 
     test "can send any character through the keyboard" do
-      browser <- T.launch {} puppeteer
+      browser <- T.launch launchOption puppeteer
       page <- T.newPage browser
       T.goto testUrl page
       T.focus (T.Selector "input#test-sendcharacter") page
@@ -151,7 +151,7 @@ tests dir = runTest do
       T.close browser
 
     test "setting the user agent successfully completes" do
-       browser <- T.launch {} puppeteer
+       browser <- T.launch launchOption puppeteer
        page <- T.newPage browser
        T.setUserAgent "Toppokki yum!" page
        T.close browser

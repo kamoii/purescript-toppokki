@@ -1,12 +1,11 @@
 module Toppokki where
 
 import Prelude
-import Toppokki.Types
 
 import Control.Promise (Promise)
 import Control.Promise as Promise
 import Data.Function.Uncurried as FU
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Data.Nullable (Nullable)
 import Data.Nullable as Nullable
@@ -18,8 +17,10 @@ import Foreign (Foreign)
 import Node.Buffer (Buffer)
 import Prim.Row as Row
 import Prim.RowList as RowList
-import Record.Extra as RecExt
+import Record (get, insert)
 import Toppokki.FFI (runPromiseAffE1, runPromiseAffE2, runPromiseAffE3, runPromiseAffE4)
+import Toppokki.Types (Browser, ElementHandle, Page, Puppeteer, Request)
+import Type.Prelude (class IsSymbol, class TypeEquals, RLProxy(..), SProxy(..))
 import Unsafe.Coerce (unsafeCoerce)
 
 newtype URL = URL String
@@ -28,28 +29,133 @@ derive instance newtypeURL :: Newtype URL _
 newtype Selector = Selector String
 derive instance newtypeSelector :: Newtype Selector _
 
-type LaunchOptions =
-  ( headless :: Boolean
-  , executablePath :: String
-  , defaultViewport :: Maybe Int
-  )
+{- | NaturalMapRecord
+特定のコンテナを持つ型だけ
+型クラスを使う方法だと instance head でマッチングで分岐する必要があるので、
+これ以上は generics が居るかな？
+-}
+class NaturalMapRecord
+  ( c :: Type -> Type )
+  ( c' :: Type -> Type )
+  ( row :: # Type )
+  ( row' :: # Type )
+  | c c' row -> row' where
+  naturalMapRecord :: (forall a. c a -> c' a) -> { | row } -> { | row' }
 
+instance naturalMapRecordI ::
+  ( RowList.RowToList row xs
+  , NaturalMapRecordField c c' xs row row'
+  ) => NaturalMapRecord c c' row row' where
+  naturalMapRecord f orig = naturalMapRecordField f (RLProxy :: RLProxy xs) orig
+
+class NaturalMapRecordField
+  ( c :: Type -> Type )
+  ( c' :: Type -> Type )
+  ( xs :: RowList.RowList )
+  ( row :: # Type )
+  ( row' :: # Type )
+  | c c' xs row -> row' where
+  naturalMapRecordField :: (forall a. c a -> c' a) -> RLProxy xs -> { | row } -> { | row' }
+
+-- Assumes there is no label dupplication
+instance naturalMapRecordFieldCons ::
+  ( IsSymbol label
+  , NaturalMapRecordField c c' tail row row''
+  , Row.Cons label (c a) _tail row
+  , Row.Lacks label row''
+  , Row.Cons label (c' a) row'' row'
+  ) => NaturalMapRecordField c c' (RowList.Cons label (c a) tail) row row' where
+  naturalMapRecordField f _ orig = insert labelProxy ca' record''
+    where
+      labelProxy = SProxy :: SProxy label
+      record'' = naturalMapRecordField f (RLProxy :: RLProxy tail) orig
+      ca' = f (get labelProxy orig)
+
+else instance naturalMapRecordFieldConsOther ::
+  ( IsSymbol label
+  , NaturalMapRecordField c c' tail row row''
+  , Row.Cons label a _tail row
+  , Row.Lacks label row''
+  , Row.Cons label a row'' row'
+  ) => NaturalMapRecordField c c' (RowList.Cons label a tail) row row' where
+  naturalMapRecordField f _ orig = insert labelProxy a record''
+    where
+      labelProxy = SProxy :: SProxy label
+      record'' = naturalMapRecordField f (RLProxy :: RLProxy tail) orig
+      a = get labelProxy orig
+
+instance naturalMapRecordFieldNil :: NaturalMapRecordField c c' RowList.Nil row () where
+  naturalMapRecordField _ _ _ = {}
+
+-- Move noisy stuff out
 class MaybeToNullable (row :: # Type) (row' :: # Type) | row -> row' where
   maybeToNullable :: Record row -> Record row'
 
-instance maybeToNullableI
-         :: (RowList.RowToList row xs, RecExt.MapRecord xs row (Maybe a) (Nullable a) () row')
-         => MaybeToNullable row row' where
-  maybeToNullable = RecExt.mapRecord Nullable.toNullable
+instance maybeToNullableI :: (NaturalMapRecord Maybe Nullable row row') => MaybeToNullable row row' where
+  maybeToNullable = naturalMapRecord Nullable.toNullable
+
+-- Shortor than `Union optoins trash FooOptions`
+-- Prim.Row が提供してほしいが...
+class SubRow (sub :: # Type) (row :: # Type)
+instance subRowI :: (Row.Union sub trash row) => SubRow sub row
+
+newtype LaunchOption row = LaunchOption (Record row)
+
+type LaunchOptions =
+  ( headless :: Boolean
+  , executablePath :: String
+  )
+
+launchOption
+  :: forall options
+   . SubRow options LaunchOptions
+  => { | options }
+  -> LaunchOption options
+launchOption = LaunchOption
+
+-- nesting 問題(型推論)
+--   外側を {} しちゃうと中の options/args が曖昧になってしまう...
+--   分割 + newtype 方式？
+--
+-- optional な引数で null と {..} の意味が違う場合
+-- Maybe { | args } 問題(型推論)
+--   ある種のオプションで発生する問題。nulを渡すか object を渡すか..
+--   subrow (+ union) 方式だと Nothing 渡された場合に型推論が死ぬ
+--   関数分ける
+--   exisstential types は ... ない
+--
+defaultViewportOption
+  :: forall options args row row' label
+   . TypeEquals (SProxy label) (SProxy "defaultViewport")
+  => SubRow options ViewportOptions
+  => Row.Union ViewportRequrieds options args
+  => IsSymbol label
+  => Row.Lacks label row
+  => Row.Cons label (Maybe { | args }) row row'
+  => { | args }
+  -> LaunchOption row
+  -> LaunchOption row'
+defaultViewportOption args (LaunchOption lo) =
+  LaunchOption $ insert (SProxy :: SProxy label) (Just args) lo
+
+noDefaultViewport
+  :: forall row row' label
+   . TypeEquals (SProxy label) (SProxy "defaultViewport")
+  => IsSymbol label
+  => Row.Lacks label row
+  => Row.Cons label (Maybe Unit) row row'
+  => LaunchOption row
+  -> LaunchOption row'
+noDefaultViewport (LaunchOption lo) =
+  LaunchOption $ insert (SProxy :: SProxy label) Nothing lo
 
 launch
-  :: forall options options' trash
-   . Row.Union options trash LaunchOptions
-  => MaybeToNullable options options'
-  => { | options }
+  :: forall options options'
+   . MaybeToNullable options options'
+  => LaunchOption options
   -> Puppeteer
   -> Aff Browser
-launch options puppeteer = runPromiseAffE2 _launch (maybeToNullable options) puppeteer
+launch (LaunchOption options) puppeteer = runPromiseAffE2 _launch (maybeToNullable options) puppeteer
 
 newPage :: Browser -> Aff Page
 newPage = runPromiseAffE1 _newPage
@@ -265,6 +371,11 @@ keyboardUp = runPromiseAffE3 _keyboardUp
 setUserAgent :: String -> Page -> Aff Unit
 setUserAgent = runPromiseAffE2 _setUserAgent
 
+type ViewportRequrieds =
+  ( width :: Int
+  , height :: Int
+  )
+
 type ViewportOptions =
   ( deviceScaleFactor :: Number
   , isMobile :: Boolean
@@ -273,9 +384,10 @@ type ViewportOptions =
   )
 
 setViewport
-  :: forall options trash
+  :: forall options trash args
    . Row.Union options trash ViewportOptions
-  => { width :: Int, height :: Int | options }
+  => Row.Union ViewportRequrieds options args
+  => { | args }
   -> Page
   -> Aff Unit
 setViewport = runPromiseAffE2 _setViewport
