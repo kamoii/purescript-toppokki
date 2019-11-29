@@ -16,7 +16,6 @@ import Node.Buffer (Buffer)
 import Option (Option)
 import Option as Op
 import Prim.Row as Row
-import Prim.RowList (class RowToList, Cons, Nil, kind RowList)
 import Toppokki.FFI (runPromiseAffE1, runPromiseAffE2, runPromiseAffE3, runPromiseAffE4)
 import Toppokki.Types (Browser, ElementHandle, Page, Puppeteer, Request)
 import Type.Prelude (SProxy(..))
