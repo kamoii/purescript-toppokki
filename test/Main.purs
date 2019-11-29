@@ -19,6 +19,7 @@ import Test.Unit.Assert as Assert
 import Test.Unit.Main (runTest)
 import Toppokki.Puppeteer (puppeteer)
 import Toppokki as T
+import Option as Op
 
 main :: Effect Unit
 main = do
@@ -30,7 +31,7 @@ tests dir = runTest do
   suite "toppokki" do
     let crashUrl = T.URL $ "file://" <> dir <> "/test/crash.html"
         testUrl = T.URL $ "file://" <> dir <> "/test/test.html"
-        launchOption = T.launchOption {}
+        launchOption = Op.fromRecord {}
     test "can screenshot and pdf output a loaded page" do
       browser <- T.launch launchOption puppeteer
       page <- T.newPage browser
