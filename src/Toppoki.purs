@@ -34,6 +34,7 @@ derive instance newtypeSelector :: Newtype Selector _
 type LaunchOptions =
   ( headless :: Boolean
   , executablePath :: String
+  , args :: Array String
   , ignoreDefaultArgs :: IgnoreDefaultArgs
   , defaultViewport :: DefaultViewport
   )
