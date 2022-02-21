@@ -226,6 +226,9 @@ unsafeEvaluateOnNewDocument = runPromiseAffE2 _unsafeEvaluateOnNewDocument
 unsafeEvaluateStringFunction :: String -> Page -> Aff Foreign
 unsafeEvaluateStringFunction = runPromiseAffE2 _unsafeEvaluateStringFunction
 
+unsafeEvaluateWithArgs :: String -> Array Foreign -> Page -> Aff Foreign
+unsafeEvaluateWithArgs = runPromiseAffE3 _unsafeEvaluateWithArgs
+
 -- | This method runs document.querySelector within the page and passes it as the first argument to pageFunction. If there's no element matching selector, the method throws an error.
 -- |
 -- | Second argument is a pageFunction which should be a valid JavaScript function written as a string which we unsafely eval.
@@ -335,6 +338,7 @@ foreign import _waitForNavigation :: forall options. FU.Fn2 options Page (Effect
 foreign import _getLocationHref :: FU.Fn1 Page (Effect (Promise String))
 foreign import _unsafeEvaluateOnNewDocument :: FU.Fn2 String Page (Effect (Promise Foreign))
 foreign import _unsafeEvaluateStringFunction :: FU.Fn2 String Page (Effect (Promise Foreign))
+foreign import _unsafeEvaluateWithArgs :: FU.Fn3 String (Array Foreign) Page (Effect (Promise Foreign))
 foreign import _unsafePageEval :: FU.Fn3 Selector String Page (Effect (Promise Foreign))
 foreign import _unsafePageEvalAll :: FU.Fn3 Selector String Page (Effect (Promise Foreign))
 foreign import _keyboardDown :: forall options. FU.Fn3 KeyboardKey options Page (Effect (Promise Unit))

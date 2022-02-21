@@ -122,6 +122,12 @@ exports._unsafeEvaluateStringFunction = function(string, page) {
   };
 };
 
+exports._unsafeEvaluateWithArgs = function(string, args, page) {
+  return function() {
+    return page.evaluate(eval(string), ...args);
+  };
+};
+
 exports._unsafePageEval = function(selector, fnStr, page) {
   return function() {
     return page.$eval(selector, eval(fnStr));
