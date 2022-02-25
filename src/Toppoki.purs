@@ -91,6 +91,9 @@ connect = runPromiseAffE1 _connect
 wsEndpoint :: Browser -> Effect WsEndpoint
 wsEndpoint = EU.runEffectFn1 _wsEndpoint
 
+pages :: Browser -> Aff (Array Page)
+pages = runPromiseAffE1 _pages
+
 newPage :: Browser -> Aff Page
 newPage = runPromiseAffE1 _newPage
 
@@ -346,6 +349,7 @@ foreign import _launchChromeAWS :: forall options. FU.Fn2 ChromeAWS options (Eff
 foreign import _connect :: forall options. FU.Fn1 options (Effect (Promise Browser))
 foreign import _wsEndpoint :: EU.EffectFn1 Browser WsEndpoint
 foreign import _newPage :: FU.Fn1 Browser (Effect (Promise Page))
+foreign import _pages :: FU.Fn1 Browser (Effect (Promise (Array Page)))
 foreign import _goto :: FU.Fn2 URL Page (Effect (Promise Unit))
 foreign import _close :: FU.Fn1 Browser (Effect (Promise Unit))
 foreign import _disconnect :: EU.EffectFn1 Browser Unit
