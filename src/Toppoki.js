@@ -14,6 +14,12 @@ exports._launchChromeAWS = function(chromium, options) {
   };
 };
 
+exports._wsEndpoint = function(browser) {
+  return function() {
+    return browser.wsEndpoint();
+  };
+};
+
 exports._newPage = function(browser) {
   return function() {
     return browser.newPage();

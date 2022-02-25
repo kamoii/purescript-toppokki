@@ -26,6 +26,9 @@ foreign import data ChromeAWS :: Type
 newtype URL = URL String
 derive instance newtypeURL :: Newtype URL _
 
+newtype WsEndpoint = WsEndpoint String
+derive instance newtypeWsEndpoint :: Newtype WsEndpoint _
+
 newtype Selector = Selector String
 derive instance newtypeSelector :: Newtype Selector _
 
@@ -70,6 +73,9 @@ launchChromeAWS
   -> { | options }
   -> Aff Browser
 launchChromeAWS = runPromiseAffE2 _launchChromeAWS
+
+wsEndpoint :: Browser -> Effect WsEndpoint
+wsEndpoint = EU.runEffectFn1 _wsEndpoint
 
 newPage :: Browser -> Aff Page
 newPage = runPromiseAffE1 _newPage
@@ -320,6 +326,7 @@ bringToFront = runPromiseAffE1 _bringToFront
 foreign import puppeteer :: Puppeteer
 foreign import _launch :: forall options. FU.Fn1 options (Effect (Promise Browser))
 foreign import _launchChromeAWS :: forall options. FU.Fn2 ChromeAWS options (Effect (Promise Browser))
+foreign import _wsEndpoint :: EU.EffectFn1 Browser WsEndpoint
 foreign import _newPage :: FU.Fn1 Browser (Effect (Promise Page))
 foreign import _goto :: FU.Fn2 URL Page (Effect (Promise Unit))
 foreign import _close :: FU.Fn1 Browser (Effect (Promise Unit))
