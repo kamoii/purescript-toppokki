@@ -50,6 +50,13 @@ type LaunchOptions =
   , userDataDir       :: String
   )
 
+type ConnectOptions =
+  ( browserWSEndpoint :: WsEndpoint
+  , ignoreHTTPSErrors :: Boolean
+  , defaultViewport   :: Record DefaultViewPort
+  , slowMo            :: Number
+  )
+
 type DefaultViewPort =
   ( width             :: Number
   , height            :: Number
@@ -74,6 +81,13 @@ launchChromeAWS
   -> Aff Browser
 launchChromeAWS = runPromiseAffE2 _launchChromeAWS
 
+connect
+  :: forall options trash
+   . Row.Union options trash ConnectOptions
+  => { | options }
+  -> Aff Browser
+connect = runPromiseAffE1 _connect
+
 wsEndpoint :: Browser -> Effect WsEndpoint
 wsEndpoint = EU.runEffectFn1 _wsEndpoint
 
@@ -85,6 +99,9 @@ goto = runPromiseAffE2 _goto
 
 close :: Browser -> Aff Unit
 close = runPromiseAffE1 _close
+
+disconnect :: Browser -> Effect Unit
+disconnect = EU.runEffectFn1 _disconnect
 
 content :: Page -> Aff String
 content = runPromiseAffE1 _content
@@ -326,10 +343,12 @@ bringToFront = runPromiseAffE1 _bringToFront
 foreign import puppeteer :: Puppeteer
 foreign import _launch :: forall options. FU.Fn1 options (Effect (Promise Browser))
 foreign import _launchChromeAWS :: forall options. FU.Fn2 ChromeAWS options (Effect (Promise Browser))
+foreign import _connect :: forall options. FU.Fn1 options (Effect (Promise Browser))
 foreign import _wsEndpoint :: EU.EffectFn1 Browser WsEndpoint
 foreign import _newPage :: FU.Fn1 Browser (Effect (Promise Page))
 foreign import _goto :: FU.Fn2 URL Page (Effect (Promise Unit))
 foreign import _close :: FU.Fn1 Browser (Effect (Promise Unit))
+foreign import _disconnect :: EU.EffectFn1 Browser Unit
 foreign import _content :: FU.Fn1 Page (Effect (Promise String))
 foreign import _setContent :: FU.Fn2 String Page (Effect (Promise Unit))
 foreign import _screenshot :: forall options. FU.Fn2 options Page (Effect (Promise Buffer))

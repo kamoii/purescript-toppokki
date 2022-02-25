@@ -14,6 +14,12 @@ exports._launchChromeAWS = function(chromium, options) {
   };
 };
 
+exports._connect = function(options) {
+  return function() {
+    return puppeteer.connect(options);
+  };
+};
+
 exports._wsEndpoint = function(browser) {
   return function() {
     return browser.wsEndpoint();
@@ -35,6 +41,12 @@ exports._goto = function(url, page) {
 exports._close = function(browser) {
   return function() {
     return browser.close();
+  };
+};
+
+exports._disconnect = function(browser) {
+  return function() {
+    return browser.disconnect();
   };
 };
 
