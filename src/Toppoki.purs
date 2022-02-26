@@ -4,6 +4,7 @@ import Prelude
 
 import Control.Promise (Promise)
 import Control.Promise as Promise
+import Data.Function.Uncurried (runFn1)
 import Data.Function.Uncurried as FU
 import Data.Newtype (class Newtype)
 import Effect (Effect)
@@ -89,7 +90,7 @@ connect
 connect = runPromiseAffE1 _connect
 
 wsEndpoint :: Browser -> Effect WsEndpoint
-wsEndpoint = EU.runEffectFn1 _wsEndpoint
+wsEndpoint = runFn1 _wsEndpoint
 
 pages :: Browser -> Aff (Array Page)
 pages = runPromiseAffE1 _pages
@@ -104,7 +105,7 @@ close :: Browser -> Aff Unit
 close = runPromiseAffE1 _close
 
 disconnect :: Browser -> Effect Unit
-disconnect = EU.runEffectFn1 _disconnect
+disconnect = runFn1 _disconnect
 
 content :: Page -> Aff String
 content = runPromiseAffE1 _content
@@ -347,12 +348,12 @@ foreign import puppeteer :: Puppeteer
 foreign import _launch :: forall options. FU.Fn1 options (Effect (Promise Browser))
 foreign import _launchChromeAWS :: forall options. FU.Fn2 ChromeAWS options (Effect (Promise Browser))
 foreign import _connect :: forall options. FU.Fn1 options (Effect (Promise Browser))
-foreign import _wsEndpoint :: EU.EffectFn1 Browser WsEndpoint
+foreign import _wsEndpoint :: FU.Fn1 Browser (Effect WsEndpoint)
 foreign import _newPage :: FU.Fn1 Browser (Effect (Promise Page))
 foreign import _pages :: FU.Fn1 Browser (Effect (Promise (Array Page)))
 foreign import _goto :: FU.Fn2 URL Page (Effect (Promise Unit))
 foreign import _close :: FU.Fn1 Browser (Effect (Promise Unit))
-foreign import _disconnect :: EU.EffectFn1 Browser Unit
+foreign import _disconnect :: FU.Fn1 Browser (Effect Unit)
 foreign import _content :: FU.Fn1 Page (Effect (Promise String))
 foreign import _setContent :: FU.Fn2 String Page (Effect (Promise Unit))
 foreign import _screenshot :: forall options. FU.Fn2 options Page (Effect (Promise Buffer))
