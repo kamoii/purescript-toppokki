@@ -38,9 +38,21 @@ exports._pages = function(browser) {
   };
 };
 
+exports._title = function(page) {
+  return function() {
+    return page.title();
+  };
+};
+
 exports._goto = function(url, page) {
   return function() {
     return page.goto(url);
+  };
+};
+
+exports._closePage = function(page) {
+  return function() {
+    return page.closePage();
   };
 };
 

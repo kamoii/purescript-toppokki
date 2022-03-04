@@ -98,8 +98,14 @@ pages = runPromiseAffE1 _pages
 newPage :: Browser -> Aff Page
 newPage = runPromiseAffE1 _newPage
 
+closePage :: Page -> Aff Unit
+closePage = runPromiseAffE1 _closePage
+
 goto :: URL -> Page -> Aff Unit
 goto = runPromiseAffE2 _goto
+
+title :: Page -> Aff String
+title = runPromiseAffE1 _title
 
 close :: Browser -> Aff Unit
 close = runPromiseAffE1 _close
@@ -351,7 +357,9 @@ foreign import _connect :: forall options. FU.Fn1 options (Effect (Promise Brows
 foreign import _wsEndpoint :: FU.Fn1 Browser (Effect WsEndpoint)
 foreign import _newPage :: FU.Fn1 Browser (Effect (Promise Page))
 foreign import _pages :: FU.Fn1 Browser (Effect (Promise (Array Page)))
+foreign import _title :: FU.Fn1 Page (Effect (Promise String))
 foreign import _goto :: FU.Fn2 URL Page (Effect (Promise Unit))
+foreign import _closePage :: FU.Fn1 Page (Effect (Promise Unit))
 foreign import _close :: FU.Fn1 Browser (Effect (Promise Unit))
 foreign import _disconnect :: FU.Fn1 Browser (Effect Unit)
 foreign import _content :: FU.Fn1 Page (Effect (Promise String))
