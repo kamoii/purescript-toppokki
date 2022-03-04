@@ -52,7 +52,7 @@ exports._goto = function(url, page) {
 
 exports._closePage = function(page) {
   return function() {
-    return page.closePage();
+    return page.close();
   };
 };
 
